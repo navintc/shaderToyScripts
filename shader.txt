@@ -1,0 +1,52 @@
+// Lifted from:https://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
+float DistanceToLineSegment(vec2 p0, vec2 p1, vec2 p)
+{
+    float distanceP0 = length(p0 - p);
+    float distanceP1 = length(p1 - p);
+    
+    float l2 =pow(length(p0 - p1), 2.);
+    float t = max(0., min(1., dot(p - p0, p1 - p0) / l2));
+    vec2 projection = p0 + t * (p1 - p0); 
+    float distanceToProjection = length(projection - p);
+    
+    return min(min(distanceP0, distanceP1), distanceToProjection);
+}
+
+float Function(float x)
+{
+    x = x * 8.;
+    x -= sin(x) * .001 + 7.0;
+    //return sin(x * sin(iTime * .2)) * sin(x + cos(iTime * iTime * .01)) * .25 + .5;
+    return ((1.5 * x * x * x) - (.9 * x) +  sin(iTime*.9-3.0)*sin(iTime*.9-3.0));
+    //return ((1.5 * x * x *x) - (.9 * x) + 0.4);
+}
+
+float DistanceToFunction(vec2 p, float xDelta)
+{
+    float result = 100.;
+    
+    for (float i = -3.; i < 3.; i += 1.)
+    {
+        vec2 q = p;
+        q.x += xDelta * i;
+        
+        vec2 p0 = vec2(q.x, Function(q.x));
+    	vec2 p1 = vec2(q.x + xDelta, Function(q.x + xDelta));
+        result = min(result, DistanceToLineSegment(p0, p1, p));
+    }
+
+    return result;
+}
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+    vec2 uv = fragCoord / iResolution.y;
+
+    float distanceToPlot = DistanceToFunction(uv, 1. / iResolution.x);
+    float intensity = smoothstep(0., 1., 1. - distanceToPlot * 1. * iResolution.y);
+    intensity = pow(intensity,1./2.2);
+    
+    vec3 col = vec3(intensity);
+
+    fragColor = vec4(col,1.0);
+}
